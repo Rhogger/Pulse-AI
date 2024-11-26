@@ -1,0 +1,10 @@
+tortoise-orm
+annoy
+crewai
+aerich
+psycopg2
+asyncpg
+tortoise-orm[psycopg]
+fastapi
+uvicorn
+python-decouple
