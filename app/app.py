@@ -1,14 +1,16 @@
 from fastapi import FastAPI
-from app.routes import specialist, service, schedule
+from app.routes import specialist, service, appointment
 from tortoise.contrib.fastapi import register_tortoise
 from app.data.config import DATABASE_CONFIG
 from main import init
 
 app = FastAPI()
 
-app.include_router(specialist.router, prefix="/specialists", tags=["Specialists"])
+app.include_router(specialist.router, prefix="/specialists",
+                   tags=["Specialists"])
 app.include_router(service.router, prefix="/services", tags=["Services"])
-app.include_router(schedule.router, prefix="/schedules", tags=["Schedules"])
+app.include_router(appointment.router, prefix="/appointments",
+                   tags=["Appointments"])
 
 
 @app.on_event("startup")

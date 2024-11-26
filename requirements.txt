@@ -8,3 +8,9 @@ tortoise-orm[psycopg]
 fastapi
 uvicorn
 python-decouple
+python-dotenv
+crewai[tools]
+requests
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

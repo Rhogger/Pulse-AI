@@ -15,13 +15,6 @@ CREATE TABLE IF NOT EXISTS "service" (
     "duration_minutes" INT NOT NULL  DEFAULT 0,
     "specialist_id" INT NOT NULL REFERENCES "specialist" ("id") ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS "schedule" (
-    "id" SERIAL NOT NULL PRIMARY KEY,
-    "start_time" TIMESTAMPTZ NOT NULL,
-    "end_time" TIMESTAMPTZ,
-    "service_id" INT NOT NULL REFERENCES "service" ("id") ON DELETE CASCADE,
-    "specialist_id" INT NOT NULL REFERENCES "specialist" ("id") ON DELETE CASCADE
-);
 CREATE TABLE IF NOT EXISTS "aerich" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "version" VARCHAR(255) NOT NULL,
