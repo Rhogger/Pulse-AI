@@ -1,11 +1,13 @@
+from zoneinfo import ZoneInfo
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, validator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.services.google_calendar_service import GoogleCalendarService
 from app.models.specialist import Specialist
 from app.models.service import Service
 from app.models.customer import Customer
 from google.auth.exceptions import DefaultCredentialsError
+from typing import Optional
 
 router = APIRouter()
 
@@ -45,6 +47,18 @@ class AppointmentIn(BaseModel):
 @router.post("/")
 async def create_appointment(appointment: AppointmentIn):
     try:
+        # Converte o horário para o timezone de Brasília
+        start_time = appointment.start_time.astimezone(
+            ZoneInfo('America/Sao_Paulo'))
+
+        # Verifica se o horário está dentro do horário comercial
+        hour = start_time.hour
+        if not (8 <= hour < 12 or 14 <= hour < 18):
+            raise HTTPException(
+                status_code=400,
+                detail="O agendamento deve estar dentro do horário comercial (8h-12h ou 14h-18h)"
+            )
+
         # Verifica se o especialista existe
         specialist = await Specialist.get(id=appointment.specialist_id)
         if not specialist:
@@ -100,3 +114,53 @@ async def create_appointment(appointment: AppointmentIn):
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/available-slots")
+async def get_available_slots(
+    start_date: str,
+    end_date: str,
+    specialist_id: Optional[int] = None,
+    service_id: Optional[int] = None
+):
+    try:
+        # Convertendo as strings para datetime e garantindo que estão em UTC
+        start_datetime = datetime.fromisoformat(
+            start_date).replace(tzinfo=timezone.utc)
+        end_datetime = datetime.fromisoformat(
+            end_date).replace(tzinfo=timezone.utc)
+
+        calendar_service = GoogleCalendarService()
+
+        # Se um serviço for especificado, obtém sua duração
+        duration_minutes = None
+        if service_id:
+            service = await Service.get(id=service_id)
+            if not service:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Serviço com ID {service_id} não encontrado"
+                )
+            duration_minutes = service.total_duration_minutes
+
+        # Se um especialista for especificado, verifica se existe
+        if specialist_id:
+            specialist = await Specialist.get(id=specialist_id)
+            if not specialist:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Especialista com ID {specialist_id} não encontrado"
+                )
+
+        slots = await calendar_service.get_available_slots(
+            start_date=start_datetime,
+            end_date=end_datetime,
+            specialist_id=specialist_id,
+            service_id=service_id,
+            duration_minutes=duration_minutes
+        )
+
+        return slots
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
