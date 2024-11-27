@@ -1,10 +1,4 @@
 from crewai import Agent
-import os
-from app.crew.tools.specialist_tool import create_new_specialist
-
-
-from crewai import Agent
-import os
 from app.crew.tools.specialist_tool import create_new_specialist
 
 

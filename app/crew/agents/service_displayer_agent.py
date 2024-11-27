@@ -1,5 +1,4 @@
 from crewai import Agent
-import os
 from app.crew.tools.service_tool import (
     list_services,
     get_service,

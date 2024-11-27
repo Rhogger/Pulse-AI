@@ -1,7 +1,7 @@
 from crewai import LLM
 
 
-def get_llama2_llm():
+def get_llama3_2_llm():
     return LLM(
         model="ollama/llama3.2:latest",
         temperature=0.1,

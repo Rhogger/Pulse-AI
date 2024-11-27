@@ -1,71 +1,53 @@
-from crewai import Crew
+from crewai import Crew, Process
 from dotenv import load_dotenv
+from app.crew.agents.customer_reception_agent import get_reception_agent
 from app.crew.llms.gemma2_llm import get_gemma2_llm
-from app.crew.agents.specialist_register_agent import get_register_agent
-from app.crew.agents.specialist_displayer_agent import get_display_agent
-from app.crew.tasks.create_specialist_task import get_create_specialist_task
-from app.crew.tasks.get_specialist_task import get_specialist_task
+from app.crew.llms.llama3_2_llm import get_llama3_2_llm
+from app.crew.agents.manager_agent import get_manager_agent
+from app.crew.tasks.welcome_customer_task import welcome_customer_task
+from app.crew.agents.customer_checker_agent import get_display_agent
+from app.crew.agents.customer_register_agent import get_register_agent
+from app.crew.tasks.get_customer_task import get_customer_task
+from app.crew.tasks.create_customer_task import create_customer_task
+from app.services.customer_service import get_all_customers
 
 
-def get_user_input():
-    print("\n=== Cadastro de Especialista ===")
-    name = input("Nome do especialista: ")
-    contact_number = input("Número de contato [(XX) XXXXX-XXXX]: ")
-    return name, contact_number
-
-
-def run_specialist_crew():
+async def run_crew(contact_number, initial_message):
     load_dotenv()
 
-    # Configurar LLM
+    user_info = await get_all_customers(contact_number)
+
+    if isinstance(user_info, list) and user_info:
+        user_info = user_info[0]
+
+    customer_name = user_info.get(
+        'name') if isinstance(user_info, dict) else None
+    customer_contact = user_info.get('number_contact') if isinstance(
+        user_info, dict) else contact_number
+
     llm = get_gemma2_llm()
+    llm_manager = get_llama3_2_llm()
 
-    # Criar agentes
-    cadastrador = get_register_agent(llm)
-    verificador = get_display_agent(llm)
+    manager = get_manager_agent(llm_manager, customer_name, customer_contact)
+    recepcionista = get_reception_agent(llm, customer_name)
+    cadastrador = get_register_agent(llm, customer_name, customer_contact)
 
-    # Obter dados do usuário
-    name, contact_number = get_user_input()
+    welcome = welcome_customer_task(
+        manager, initial_message, customer_name, customer_contact)
+    create_customer = create_customer_task(cadastrador)
 
-    # Criar e executar primeira task
-    create_task = get_create_specialist_task(
-        agent=cadastrador,
-        name=name,
-        contact_number=contact_number
+    tasks = [
+        welcome,
+        create_customer
+    ]
+
+    crew = Crew(
+        agents=[recepcionista, cadastrador],
+        tasks=tasks,
+        process=Process.hierarchical,
+        manager_agent=manager,
+        verbose=True,
     )
 
-    # Executa primeira task e obtém resultado
-    crew_create = Crew(
-        agents=[cadastrador],
-        tasks=[create_task],
-        verbose=True
-    )
-    create_result = crew_create.kickoff()
-
-    # Criar task de verificação com o resultado anterior
-    verify_task = get_specialist_task(
-        agent=verificador,
-        specialist_data=create_result  # Passa o JSON do especialista criado
-    )
-
-    # Executa segunda task
-    crew_verify = Crew(
-        agents=[verificador],
-        tasks=[verify_task],
-        verbose=True
-    )
-    verify_result = crew_verify.kickoff()
-
-    return f"""
-    Cadastro: {create_result}
-    Verificação: {verify_result}
-    """
-
-
-if __name__ == "__main__":
-    try:
-        run_specialist_crew()
-    except KeyboardInterrupt:
-        print("\nOperação cancelada pelo usuário.")
-    except Exception as e:
-        print(f"\nErro: {str(e)}")
+    results = await crew.kickoff()
+    return results

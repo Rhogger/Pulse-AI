@@ -1,5 +1,4 @@
 from crewai import Agent
-import os
 from app.crew.tools.specialist_tool import list_specialists, get_specialist
 
 

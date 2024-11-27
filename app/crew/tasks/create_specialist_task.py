@@ -1,7 +1,7 @@
 from crewai import Task
 
 
-def get_create_specialist_task(agent, name: str, contact_number: str):
+def create_specialist_task(agent, name: str, contact_number: str):
     return Task(
         description=f"""
         EXECUTE AGORA:

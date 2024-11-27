@@ -12,13 +12,33 @@ class GoogleCalendarService:
         self.service = build('calendar', 'v3', credentials=self.credentials)
         self.calendar_id = 'primary'
 
-    async def create_appointment(self, specialist_name: str, service_name: str,
-                                 start_time: datetime, end_time: datetime):
+    async def create_appointment(
+        self,
+        specialist_name: str,
+        service_name: str,
+        customer_name: str,
+        customer_contact: str,
+        start_time: datetime,
+        end_time: datetime,
+        notes: str | None = None
+    ):
         """
         Cria um evento no Google Calendar para um agendamento.
         """
+        # Cria uma descrição detalhada
+        description = f"""
+        Cliente: {customer_name}
+        Contato: {customer_contact}
+        Serviço: {service_name}
+        Profissional: {specialist_name}
+        """
+
+        if notes:
+            description += f"\nObservações: {notes}"
+
         event = {
             'summary': f'{specialist_name} - {service_name}',
+            'description': description,
             'start': {
                 'dateTime': start_time.isoformat(),
                 'timeZone': 'America/Sao_Paulo',
@@ -38,6 +58,7 @@ class GoogleCalendarService:
             return {
                 'id': event['id'],
                 'summary': event['summary'],
+                'description': event['description'],
                 'start': event['start']['dateTime'],
                 'end': event['end']['dateTime']
             }

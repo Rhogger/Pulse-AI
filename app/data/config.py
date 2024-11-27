@@ -21,6 +21,7 @@ DATABASE_CONFIG = {
             "models": [
                 "app.models.specialist",
                 "app.models.service",
+                "app.models.customer",
                 "aerich.models"],
             "default_connection": "default",
         },

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from app.services.google_calendar_service import GoogleCalendarService
 from app.models.specialist import Specialist
 from app.models.service import Service
+from app.models.customer import Customer
 from google.auth.exceptions import DefaultCredentialsError
 
 router = APIRouter()
@@ -12,7 +13,9 @@ router = APIRouter()
 class AppointmentIn(BaseModel):
     specialist_id: int
     service_id: int
+    customer_id: int
     start_time: datetime
+    notes: str | None = None
 
     @validator('specialist_id')
     def validate_specialist_id(cls, v):
@@ -30,6 +33,12 @@ class AppointmentIn(BaseModel):
     def validate_start_time(cls, v):
         if v < datetime.now():
             raise ValueError("A data de início não pode ser no passado")
+        return v
+
+    @validator('customer_id')
+    def validate_customer_id(cls, v):
+        if v <= 0:
+            raise ValueError("ID do cliente deve ser maior que zero")
         return v
 
 
@@ -52,6 +61,14 @@ async def create_appointment(appointment: AppointmentIn):
                 detail=f"Serviço com ID {appointment.service_id} não encontrado"
             )
 
+        # Verifica se o cliente existe
+        customer = await Customer.get(id=appointment.customer_id)
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cliente com ID {appointment.customer_id} não encontrado"
+            )
+
         duration_minutes = service.total_duration_minutes
         end_time = appointment.start_time + timedelta(minutes=duration_minutes)
 
@@ -60,15 +77,18 @@ async def create_appointment(appointment: AppointmentIn):
             event = await calendar_service.create_appointment(
                 specialist_name=specialist.name,
                 service_name=service.name,
+                customer_name=customer.name,
+                customer_contact=customer.contact_number,
                 start_time=appointment.start_time,
-                end_time=end_time
+                end_time=end_time,
+                notes=appointment.notes
             )
             return event
 
         except DefaultCredentialsError:
             raise HTTPException(
                 status_code=500,
-                detail="Erro na configuração das credenciais do Google Calendar. Verifique o arquivo credentials.json"
+                detail="Erro na configuração das credenciais do Google Calendar"
             )
         except Exception as e:
             raise HTTPException(
