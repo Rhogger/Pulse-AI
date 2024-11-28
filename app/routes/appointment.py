@@ -164,3 +164,50 @@ async def get_available_slots(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/by-contact/{contact}")
+async def get_appointments_by_contact(
+    contact: str,
+    start_date: str,
+    end_date: str
+):
+    try:
+        print(f"\nRecebendo requisição de busca por contato:")
+        print(f"Contato: {contact}")
+        print(f"Data início: {start_date}")
+        print(f"Data fim: {end_date}")
+
+        # Converte as strings de data para datetime
+        try:
+            start_datetime = datetime.fromisoformat(start_date)
+            end_datetime = datetime.fromisoformat(end_date)
+            print("Datas convertidas com sucesso")
+        except ValueError as e:
+            print(f"Erro ao converter datas: {str(e)}")
+            raise
+
+        calendar_service = GoogleCalendarService()
+        print("Iniciando busca no Google Calendar")
+
+        appointments = await calendar_service.get_appointments_by_contact(
+            contact=contact,
+            start_date=start_datetime,
+            end_date=end_datetime
+        )
+
+        print(f"Busca concluída. Encontrados {len(appointments)} agendamentos")
+        return appointments
+
+    except ValueError as e:
+        print(f"Erro de validação: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Formato de data inválido: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Erro não esperado: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao buscar agendamentos: {str(e)}"
+        )

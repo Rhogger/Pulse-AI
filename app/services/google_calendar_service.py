@@ -335,3 +335,122 @@ class GoogleCalendarService:
                     continue
 
         return slots
+
+    async def get_appointments_by_contact(
+        self,
+        contact: str,
+        start_date: datetime,
+        end_date: datetime
+    ):
+        """
+        Busca agendamentos de um cliente específico pelo número de contato.
+        """
+        try:
+            print("\nBuscando agendamentos por contato:")
+            print(f"Contato: {contact}")
+            print(f"Data início: {start_date}")
+            print(f"Data fim: {end_date}")
+
+            # Garante que as datas estão em UTC
+            start_date = start_date.astimezone(timezone.utc)
+            end_date = end_date.astimezone(timezone.utc)
+
+            # Formata as datas no formato RFC3339
+            time_min = start_date.isoformat()
+            time_max = end_date.isoformat()
+
+            print(f"Time Min (formatted): {time_min}")
+            print(f"Time Max (formatted): {time_max}")
+
+            # Busca eventos no período
+            events_result = self.service.events().list(
+                calendarId=self.calendar_id,
+                timeMin=time_min,
+                timeMax=time_max,
+                singleEvents=True,
+                orderBy='startTime'
+            ).execute()
+
+            events = events_result.get('items', [])
+            print(f"\nTotal de eventos encontrados no período: {len(events)}")
+
+            client_appointments = []
+
+            for event in events:
+                print(
+                    f"\nVerificando evento: {event.get('summary', 'Sem título')}")
+
+                # Verifica se o evento tem descrição
+                if 'description' not in event:
+                    print("Evento sem descrição, pulando...")
+                    continue
+
+                print(f"Descrição do evento: {event['description']}")
+                print(f"Procurando contato '{contact}' na descrição")
+
+                # Procura o número de contato na descrição
+                if f"Contato: {contact}" in event['description']:
+                    print("Contato encontrado no evento!")
+
+                    # Extrai informações do evento
+                    event_data = {
+                        'id': event['id'],
+                        'summary': event['summary'],
+                        'start': datetime.fromisoformat(
+                            event['start']['dateTime']
+                        ).astimezone(self.TIMEZONE).isoformat(),
+                        'end': datetime.fromisoformat(
+                            event['end']['dateTime']
+                        ).astimezone(self.TIMEZONE).isoformat(),
+                        'description': event['description']
+                    }
+
+                    # Extrai informações adicionais da descrição
+                    description_lines = event['description'].strip().split(
+                        '\n')
+                    print("Extraindo informações da descrição:")
+
+                    for line in description_lines:
+                        line = line.strip()
+                        print(f"Processando linha: {line}")
+
+                        if line.startswith('Cliente:'):
+                            event_data['customer_name'] = line.replace(
+                                'Cliente:', '').strip()
+                            print(
+                                f"Nome do cliente encontrado: {event_data['customer_name']}")
+                        elif line.startswith('Serviço:'):
+                            event_data['service'] = line.replace(
+                                'Serviço:', '').strip()
+                            print(
+                                f"Serviço encontrado: {event_data['service']}")
+                        elif line.startswith('Profissional:'):
+                            event_data['specialist'] = line.replace(
+                                'Profissional:', '').strip()
+                            print(
+                                f"Profissional encontrado: {event_data['specialist']}")
+                        elif line.startswith('Observações:'):
+                            event_data['notes'] = line.replace(
+                                'Observações:', '').strip()
+                            print(
+                                f"Observações encontradas: {event_data['notes']}")
+
+                    client_appointments.append(event_data)
+                    print("Evento adicionado à lista de agendamentos do cliente")
+
+            print(
+                f"\nTotal de agendamentos encontrados para o cliente: {len(client_appointments)}")
+
+            # Ordena os agendamentos por data
+            client_appointments.sort(
+                key=lambda x: datetime.fromisoformat(x['start'])
+            )
+
+            return client_appointments
+
+        except Exception as e:
+            print(f"Erro ao buscar agendamentos: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao buscar agendamentos: {str(e)}"
+            )
