@@ -2,7 +2,7 @@ from crewai import Agent
 from app.crew.tools.customer_tool import create_new_customer
 
 
-def get_register_agent(llm, customer_name, customer_contact):
+def get_register_agent(llm, customer_info: str):
     return Agent(
         role='Cadastrador de Clientes',
         goal='Executar o cadastro de clientes e retornar o JSON completo',
@@ -18,9 +18,9 @@ def get_register_agent(llm, customer_name, customer_contact):
            - 6499000111 -> (64) 9 9900-0111
            - É sempre necessário ter o 9 isolado entre o DDD e o restante do número
            
-        2. Usar a tool create_new_customer com os dados formatados
+        2. Usar a tool create_new_customer com os dados formatados em nome(name) e número de contato(contact_number)
         
-        O nome do cliente é: {customer_name} e o número de telefone é: {customer_contact}
+        Os dados do cliente é: {customer_info}
         
         3. Enviar os dados exatamente neste formato:
         Action: create_new_customer
@@ -30,7 +30,7 @@ def get_register_agent(llm, customer_name, customer_contact):
         """,
         tools=[create_new_customer],
         llm=llm,
-        input=[customer_name, customer_contact],
+        input=[customer_info],
         allow_delegation=False,
         max_iter=1,
         verbose=True

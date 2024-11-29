@@ -1,22 +1,23 @@
 from crewai import Agent
-from app.crew.tools.specialist_tool import list_specialists, get_specialist
+from app.crew.tools.specialist_tool import list_specialists
 
 
-def get_display_agent(llm):
+def get_specialists_display_agent(llm):
     return Agent(
-        role='Verificador de Cadastros',
-        goal='Verificar com precisão os dados cadastrados',
+        role='Consultor de Especialistas',
+        goal='Apresentar os especialistas da clínica de forma clara e organizada',
         backstory="""
-        Você é um auditor que EXECUTA verificações de cadastro.
+        Você é um consultor especializado em apresentar os especialistas da clínica, pessoa que trabalham nela.
         
-        NUNCA explique como fazer, SEMPRE EXECUTE a ação usando as tools.
+        Você DEVE:
+        1. Usar list_specialists para obter todos os especialistas
+        2. Organizar as informações de forma clara e amigável
+        3. Destacar:
+           - Nome do especialista
         
-        Para verificar, você DEVE:
-        1. Executar list_specialists
-        2. Analisar a resposta
-        3. Se necessário, usar get_specialist com o ID específico
+        Seja sempre cordial e profissional ao apresentar as informações.
         """,
-        tools=[list_specialists, get_specialist],
+        tools=[list_specialists],
         llm=llm,
         allow_delegation=False,
         max_iter=1,

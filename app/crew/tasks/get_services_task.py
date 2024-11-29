@@ -1,57 +1,63 @@
 from crewai import Task
-import json
 
 
-def get_services_by_specialist_task(agent, specialist_data: str):
-    """
-    Args:
-        specialist_data: JSON string do especialista
-    """
-    try:
-        specialist = json.loads(specialist_data)
-        specialist_id = specialist.get('id')
-    except:
-        specialist_id = None
-
+def list_services_task(agent):
     return Task(
-        description=f"""
+        description="""
         EXECUTE AGORA:
-        1. Use get_services_by_specialist com o ID {specialist_id} para listar os serviços
-        2. Se não conseguir buscar por ID, use list_services
-        3. Reporte exatamente o que encontrou
+        1. Use a tool 'list_services' para obter o catálogo completo de serviços
+        2. Organize e apresente as informações da seguinte forma:
+           
+           SERVIÇOS DISPONÍVEIS:
+           - Nome do serviço
+           - Duração em minutos (calculada pelos slots de 30 minutos)
+           - Lista completa dos especialistas que realizam o serviço
+           
+           AGRUPAMENTOS ESPECIAIS:
+           - Se encontrar serviços similares (ex: "Corte Feminino" e "Corte Feminino Premium"),
+             agrupe-os e explique as diferenças
+           - Se encontrar serviços com múltiplos especialistas,
+             destaque essa versatilidade
+           
+        IMPORTANTE:
+        - Formate a resposta de maneira amigável e profissional
+        - Use marcadores para melhor organização visual
+        - Destaque informações importantes em negrito quando necessário
+        - Mantenha um tom cordial e prestativo
         
-        NÃO EXPLIQUE O PROCESSO, APENAS EXECUTE.
+        NÃO EXPLIQUE O PROCESSO, APENAS APRESENTE OS RESULTADOS ORGANIZADOS.
         """,
-        expected_output="Lista de serviços encontrados",
-        agent=agent,
-        context=specialist_data
-    )
-
-
-def get_service_by_id_task(agent, service_id: int):
-    return Task(
-        description=f"""
-        EXECUTE AGORA:
-        1. Use get_service com o ID {service_id}
-        2. Se não encontrar, use list_services
-        3. Reporte exatamente o que encontrou
-        
-        NÃO EXPLIQUE O PROCESSO, APENAS EXECUTE.
-        """,
-        expected_output="Dados do serviço encontrado",
+        expected_output="Catálogo detalhado e organizado de serviços",
         agent=agent
     )
 
 
-def list_all_services_task(agent):
+def list_services_by_specialist_task(agent, specialist_name: str):
     return Task(
-        description="""
+        description=f"""
         EXECUTE AGORA:
-        1. Use list_services para ver todos os serviços
-        2. Reporte exatamente o que encontrou
+        1. Use a tool 'list_services' para obter todos os serviços disponíveis
+        2. Organize e apresente os serviços do especialista "{specialist_name}":
+           
+           SERVIÇOS REALIZADOS PELO ESPECIALISTA:
+           - Nome de cada serviço que realiza
+           - Duração em minutos de cada serviço
+           - Outros especialistas que também realizam o mesmo serviço
+           
+           CASOS ESPECIAIS:
+           - Se houver especialistas com nomes similares a "{specialist_name}",
+             pergunte ao cliente para confirmar qual profissional está buscando
+           - Se o especialista realizar versões especiais de serviços,
+             destaque essas especializações
+           
+        IMPORTANTE:
+        - Formate a resposta de maneira amigável e profissional
+        - Use marcadores para melhor organização visual
+        - Destaque informações importantes em negrito quando necessário
+        - Mantenha um tom cordial e prestativo
         
-        NÃO EXPLIQUE O PROCESSO, APENAS EXECUTE.
+        NÃO EXPLIQUE O PROCESSO, APENAS APRESENTE OS RESULTADOS ORGANIZADOS.
         """,
-        expected_output="Lista completa de serviços",
+        expected_output=f"Lista organizada de serviços realizados por {specialist_name}",
         agent=agent
     )

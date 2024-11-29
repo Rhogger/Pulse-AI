@@ -51,20 +51,3 @@ def list_specialists() -> str:
         ])
     except Exception as e:
         return f"Erro ao listar especialistas: {str(e)}"
-
-
-@tool
-def get_specialist(specialist_id: int) -> str:
-    """Útil para buscar um especialista específico pelo ID."""
-    try:
-        response = requests.get(f"{BASE_URL}/specialists/{specialist_id}")
-
-        if response.status_code == 404:
-            return "Especialista não encontrado"
-        elif response.status_code != 200:
-            return f"Erro ao buscar especialista: {response.text}"
-
-        specialist = response.json()
-        return f"ID: {specialist['id']}, Nome: {specialist['name']}, Contato: {specialist['contact_number']}"
-    except Exception as e:
-        return f"Erro ao buscar especialista: {str(e)}"
