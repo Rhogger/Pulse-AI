@@ -36,3 +36,16 @@ async def delete_specialist(specialist_id: int):
         await specialist.delete()
         return True
     return False
+
+
+async def get_specialist_by_name(name: str):
+    """Retorna um especialista pelo nome."""
+    try:
+        return await Specialist.get_by_name(name)
+    except DoesNotExist:
+        return None
+
+
+async def search_specialists_by_name(name: str):
+    """Retorna todos os especialistas que correspondam ao nome."""
+    return await Specialist.search_by_name(name)

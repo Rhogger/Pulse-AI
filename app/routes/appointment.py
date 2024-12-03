@@ -120,43 +120,28 @@ async def create_appointment(appointment: AppointmentIn):
 async def get_available_slots(
     start_date: str,
     end_date: str,
-    specialist_id: Optional[int] = None,
-    service_id: Optional[int] = None
+    specialist_name: str | None = None,
+    service_type: str | None = None
 ):
     try:
-        # Convertendo as strings para datetime e garantindo que estão em UTC
-        start_datetime = datetime.fromisoformat(
-            start_date).replace(tzinfo=timezone.utc)
-        end_datetime = datetime.fromisoformat(
-            end_date).replace(tzinfo=timezone.utc)
+        # Convertendo as strings para datetime
+        start_datetime = datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc)
+        end_datetime = datetime.fromisoformat(end_date).replace(tzinfo=timezone.utc)
 
         calendar_service = GoogleCalendarService()
 
         # Se um serviço for especificado, obtém sua duração
         duration_minutes = None
-        if service_id:
-            service = await Service.get(id=service_id)
-            if not service:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Serviço com ID {service_id} não encontrado"
-                )
-            duration_minutes = service.total_duration_minutes
-
-        # Se um especialista for especificado, verifica se existe
-        if specialist_id:
-            specialist = await Specialist.get(id=specialist_id)
-            if not specialist:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Especialista com ID {specialist_id} não encontrado"
-                )
+        if service_type:
+            service = await Service.get_by_name(service_type)
+            if service:
+                duration_minutes = service.total_duration_minutes
 
         slots = await calendar_service.get_available_slots(
             start_date=start_datetime,
             end_date=end_datetime,
-            specialist_id=specialist_id,
-            service_id=service_id,
+            specialist_name=specialist_name,
+            service_type=service_type,
             duration_minutes=duration_minutes
         )
 

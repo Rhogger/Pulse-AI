@@ -7,9 +7,12 @@ from app.services.service_service import (
     get_services_by_specialist,
     update_service,
     delete_service,
+    search_services_by_name,
+    get_service_by_name,
 )
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from app.models.service import Service
 
 
 router = APIRouter()
@@ -91,3 +94,27 @@ async def remove_service(service_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Serviço não encontrado")
     return {"detail": "Serviço deletado com sucesso"}
+
+
+@router.get("/search/{name}", response_model=List[ServiceOut])
+async def search_services_by_name(name: str):
+    """Busca serviços pelo nome"""
+    services = await search_services_by_name(name)
+    if not services:
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhum serviço encontrado com este nome"
+        )
+    return services
+
+
+@router.get("/by-name/{name}", response_model=ServiceOut)
+async def get_service_by_name(name: str):
+    """Busca um serviço específico pelo nome"""
+    service = await get_service_by_name(name)
+    if not service:
+        raise HTTPException(
+            status_code=404,
+            detail="Serviço não encontrado"
+        )
+    return service

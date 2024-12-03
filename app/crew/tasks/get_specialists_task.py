@@ -5,18 +5,11 @@ def list_specialists_task(agent):
     return Task(
         description="""
         EXECUTE AGORA:
-        1. Use a tool 'list_specialists' para obter a lista completa de profissionais
+        1. Obtenha a lista completa de profissionais
         2. Organize e apresente as informações da seguinte forma:
            
            ESPECIALISTAS DA CLÍNICA:
-           - Nome completo do profissional
-           - Número de contato para agendamentos
-           
-           CASOS ESPECIAIS:
-           - Se encontrar especialistas com nomes similares,
-             agrupe-os e destaque características únicas de cada um
-           - Se precisar de confirmação do cliente sobre qual especialista
-             está buscando, faça perguntas específicas
+           - Nome do profissional
            
         IMPORTANTE:
         - Formate a resposta de maneira amigável e profissional
@@ -27,5 +20,4 @@ def list_specialists_task(agent):
         NÃO EXPLIQUE O PROCESSO, APENAS APRESENTE OS RESULTADOS ORGANIZADOS.
         """,
         expected_output="Lista detalhada e organizada dos especialistas",
-        agent=agent
-    )
+        agent=agent)

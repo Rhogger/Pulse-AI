@@ -23,12 +23,14 @@ def list_services() -> str:
             specialists_str = ", ".join([spec["name"]
                                         for spec in s["specialists"]])
             result.append(
-                f"ID: {s['id']}, Nome: {s['name']}, "
-                f"Especialistas: [{specialists_str}], "
-                f"Duração: {s['duration_minutes']} minutos ({s['time_slots']} slots)"
-                f"Preço: R$ {s['price']}"
+                f"Nome: {s['name']}\n"
+                f"Descrição: {s['description']}\n"
+                f"Duração: {s['duration']} minutos\n"
+                f"Preço: R$ {s['price']}\n"
+                f"Especialistas: {specialists_str}\n"
             )
-        return "\n".join(result)
+
+        return "\n---\n".join(result)  # Separa cada serviço com uma linha
     except Exception as e:
         return f"Erro ao listar serviços: {str(e)}"
 
@@ -51,10 +53,13 @@ def get_services_by_specialist(specialist_id: int) -> str:
             specialists_str = ", ".join([spec["name"]
                                         for spec in s["specialists"]])
             result.append(
-                f"ID: {s['id']}, Nome: {s['name']}, "
-                f"Especialistas: [{specialists_str}], "
-                f"Duração: {s['duration_minutes']} minutos ({s['time_slots']} slots)"
+                f"Nome: {s['name']}\n"
+                f"Descrição: {s['description']}\n"
+                f"Duração: {s['duration']} minutos\n"
+                f"Preço: R$ {s['price']}\n"
+                f"Especialistas: {specialists_str}\n"
             )
-        return "\n".join(result)
+
+        return "\n---\n".join(result)  # Separa cada serviço com uma linha
     except Exception as e:
         return f"Erro ao listar serviços do especialista: {str(e)}"

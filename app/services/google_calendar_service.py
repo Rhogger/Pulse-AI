@@ -104,8 +104,8 @@ class GoogleCalendarService:
         self,
         start_date: datetime,
         end_date: datetime,
-        specialist_id: int | None = None,
-        service_id: int | None = None,
+        specialist_name: str | None = None,
+        service_type: str | None = None,
         duration_minutes: int | None = None
     ):
         """
@@ -116,25 +116,9 @@ class GoogleCalendarService:
             print(f"Buscando slots disponíveis:")
             print(f"Start date: {start_date}")
             print(f"End date: {end_date}")
-            print(f"Specialist ID: {specialist_id}")
-            print(f"Service ID: {service_id}")
+            print(f"Specialist: {specialist_name}")
+            print(f"Service: {service_type}")
             print(f"Duration: {duration_minutes}")
-
-            # Busca o nome do especialista e do serviço
-            specialist_name = None
-            service_name = None
-
-            if specialist_id:
-                specialist = await Specialist.get(id=specialist_id)
-                if specialist:
-                    specialist_name = specialist.name
-                    print(f"Nome do especialista: {specialist_name}")
-
-            if service_id:
-                service = await Service.get(id=service_id)
-                if service:
-                    service_name = service.name
-                    print(f"Nome do serviço: {service_name}")
 
             # Garante que as datas estão em UTC
             start_date = start_date.astimezone(timezone.utc)
@@ -201,7 +185,7 @@ class GoogleCalendarService:
                     day_events,
                     duration_minutes or 30,
                     specialist_name,
-                    service_name
+                    service_type
                 )
 
                 available_slots.extend(day_slots)
@@ -231,7 +215,7 @@ class GoogleCalendarService:
         events: list,
         duration_minutes: int,
         specialist_name: str | None = None,
-        service_name: str | None = None
+        service_type: str | None = None
     ):
         """Gera slots disponíveis para um dia, considerando eventos existentes."""
         # Garantindo que as datas estão no timezone de Brasília
@@ -253,20 +237,15 @@ class GoogleCalendarService:
             if 'summary' not in event:
                 continue
 
-            print(f"Verificando evento: {event['summary']}")
             event_parts = event['summary'].split(' - ')
             if len(event_parts) != 2:
                 continue
 
             event_specialist, event_service = event_parts
-            print(f"Especialista do evento: {event_specialist}")
-            print(f"Serviço do evento: {event_service}")
-            print(f"Comparando com: {specialist_name} - {service_name}")
 
-            if specialist_name and service_name:
-                if specialist_name in event_specialist and service_name in event_service:
-                    print("Evento corresponde ao filtro!")
-                    filtered_events.append(event)
+            if (not specialist_name or specialist_name.lower() in event_specialist.lower()) and \
+               (not service_type or service_type.lower() in event_service.lower()):
+                filtered_events.append(event)
 
         print(f"Total de eventos filtrados: {len(filtered_events)}")
 

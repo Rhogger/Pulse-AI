@@ -14,16 +14,9 @@ def _run_crew_in_process(func, *args):
 
 def execute_analyze_conversation_crew(messages: List[Dict], customer_status: str) -> str:
     """
-    Analisa uma lista de mensagens usando a crew especializada de forma síncrona.
-
-    Args:
-        messages: Lista de mensagens para análise
-
-    Returns:
-        str: Resumo estruturado da conversa
+    Analisa uma lista de mensagens e retorna a intenção identificada.
     """
     try:
-        # Formata as mensagens para o formato esperado
         formatted_messages = [
             {
                 'content': msg['content'],
@@ -32,27 +25,24 @@ def execute_analyze_conversation_crew(messages: List[Dict], customer_status: str
             for msg in messages
         ]
 
-        # Executa a crew de análise em um processo separado
+        # Retorna apenas a palavra que identifica a intenção
         return _run_crew_in_process(run_analyzer_crew, formatted_messages, customer_status)
 
     except Exception as e:
         raise Exception(f"Erro ao analisar conversa: {str(e)}")
 
 
-def execute_hierarchical_crew(contact_number: str, initial_message: str) -> str:
+def execute_hierarchical_crew(customer_name: str, contact_number: str, intention: str) -> dict:
     """
-    Executa a crew hierárquica de forma síncrona.
-
-    Args:
-        contact_number: Número de contato do cliente
-        initial_message: Mensagem inicial ou resumo da análise
-
-    Returns:
-        str: Resultado da execução da crew hierárquica
+    Executa a crew específica baseada na intenção identificada.
     """
     try:
-        # Executa a crew hierárquica em um processo separado
-        return _run_crew_in_process(run_crew, contact_number, initial_message)
+        return _run_crew_in_process(
+            run_crew,
+            customer_name,
+            contact_number,
+            intention
+        )
 
     except Exception as e:
-        raise Exception(f"Erro ao executar crew hierárquica: {str(e)}")
+        raise Exception(f"Erro ao executar crew específica: {str(e)}")

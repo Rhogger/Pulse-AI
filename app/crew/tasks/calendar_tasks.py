@@ -1,63 +1,37 @@
 from crewai import Task
 
 
-def create_appointment_task(agent, specialist_id: int, service_id: int,
-                            customer_id: int, start_time: str, notes: str = None):
+def process_calendar_request(agent, request_message: str, current_datetime: str):
     return Task(
         description=f"""
-        EXECUTE AGORA:
-        1. Verifique a disponibilidade do horário solicitado
-        2. Se disponível, crie o agendamento com:
-           - Especialista ID: {specialist_id}
-           - Serviço ID: {service_id}
-           - Cliente ID: {customer_id}
-           - Horário: {start_time}
-           - Observações: {notes if notes else 'Nenhuma'}
-           
-        IMPORTANTE:
-        - Confirme que o horário está no horário comercial
-        - Verifique se todos os IDs são válidos
-        - Formate a resposta de maneira clara
-        """,
-        expected_output="Confirmação do agendamento criado",
-        agent=agent
-    )
-
-
-def check_available_slots_task(agent, start_date: str, end_date: str,
-                               specialist_id: int = None, service_id: int = None):
-    return Task(
-        description=f"""
-        EXECUTE AGORA:
-        1. Busque os horários disponíveis entre {start_date} e {end_date}
-        2. Filtre por:
-           - Especialista ID: {specialist_id if specialist_id else 'Todos'}
-           - Serviço ID: {service_id if service_id else 'Todos'}
-           
-        IMPORTANTE:
-        - Organize os horários por data
-        - Destaque os períodos com mais opções
-        - Indique claramente quando não houver disponibilidade
-        """,
-        expected_output="Lista organizada de horários disponíveis",
-        agent=agent
-    )
-
-
-def check_customer_appointments_task(agent, contact: str,
-                                     start_date: str, end_date: str):
-    return Task(
-        description=f"""
-        EXECUTE AGORA:
-        1. Busque os agendamentos do cliente {contact}
-        2. Filtre entre {start_date} e {end_date}
+        ANALISE E EXECUTE A SEGUINTE SOLICITAÇÃO:
+        "{request_message}"
+        
+        CONTEXTO TEMPORAL:
+        Momento atual: {current_datetime}
         
         IMPORTANTE:
-        - Organize cronologicamente
-        - Destaque data, horário e serviço
-        - Inclua nome do especialista
-        - Indique se há observações especiais
+        1. Identifique a intenção do cliente (agendar, cancelar, consultar horários, etc)
+        2. Extraia todas as informações relevantes da mensagem
+        3. Valide TODAS as informações antes de executar qualquer ação:
+           - Especialista foi informado?
+           - Serviço foi especificado?
+           - Data/hora é posterior ao momento atual?
+           - Horário está dentro do período comercial?
+        4. Use linguagem natural e cordial na resposta
+        
+        REGRAS DE VALIDAÇÃO:
+        - Se faltar especialista ou serviço, solicite a informação ao cliente
+        - Se a data/hora for anterior ao momento atual, informe o erro e sugira horários futuros
+        - Se o horário estiver fora do período comercial (8h-12h e 14h-18h), sugira horários disponíveis
+        - Sempre confirme disponibilidade antes de agendar
+        
+        FORMATO DA RESPOSTA:
+        - Use linguagem natural e cordial
+        - Formate datas de forma amigável (exemplo: "quarta-feira, 15 de março às 14h")
+        - Nunca exponha informações técnicas ou IDs
+        - Em caso de dúvidas ou falta de informações, faça perguntas claras e objetivas
         """,
-        expected_output="Lista detalhada dos agendamentos do cliente",
+        expected_output="Resposta em linguagem natural para a solicitação do cliente",
         agent=agent
     )

@@ -179,3 +179,51 @@ async def delete_service(service_id: int):
         return True
     except DoesNotExist:
         return False
+
+
+async def get_service_by_name(name: str):
+    """Retorna um serviço pelo nome."""
+    try:
+        service = await Service.get_by_name(name)
+        if service:
+            await service.fetch_related("specialists")
+            return {
+                "id": service.id,
+                "name": service.name,
+                "description": service.description,
+                "duration": service.duration * 30,
+                "price": service.price,
+                "specialists": [
+                    {
+                        "id": specialist.id,
+                        "name": specialist.name
+                    }
+                    for specialist in service.specialists
+                ]
+            }
+        return None
+    except DoesNotExist:
+        return None
+
+
+async def search_services_by_name(name: str):
+    """Retorna todos os serviços que correspondam ao nome."""
+    services = await Service.search_by_name(name)
+    result = []
+    for service in services:
+        await service.fetch_related("specialists")
+        result.append({
+            "id": service.id,
+            "name": service.name,
+            "description": service.description,
+            "duration": service.duration * 30,
+            "price": service.price,
+            "specialists": [
+                {
+                    "id": specialist.id,
+                    "name": specialist.name
+                }
+                for specialist in service.specialists
+            ]
+        })
+    return result

@@ -10,16 +10,21 @@ def get_specialists_display_agent(llm):
         Você é um consultor especializado em apresentar os especialistas da clínica, pessoa que trabalham nela.
         
         Você DEVE:
-        1. Usar list_specialists para obter todos os especialistas
+        1. Usar a tool para obter todos os especialistas
         2. Organizar as informações de forma clara e amigável
         3. Destacar:
            - Nome do especialista
+        4. NAO RESPONDER EM MARKDOWN
         
         Seja sempre cordial e profissional ao apresentar as informações.
+        
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
         """,
         tools=[list_specialists],
         llm=llm,
-        allow_delegation=True,
-        max_iter=1,
         verbose=True
     )

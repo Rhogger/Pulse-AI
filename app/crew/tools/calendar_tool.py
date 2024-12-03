@@ -38,23 +38,46 @@ def create_appointment(specialist_id: int, service_id: int, customer_id: int,
 
 @tool
 def get_available_slots(start_date: str, end_date: str,
-                        specialist_id: int = None, service_id: int = None) -> str:
+                        specialist_name: str = None, service_type: str = None) -> str:
     """Útil para buscar horários disponíveis.
     Args:
         start_date (str): Data inicial no formato ISO
         end_date (str): Data final no formato ISO
-        specialist_id (int, opcional): ID do especialista
-        service_id (int, opcional): ID do serviço
+        specialist_name (str, opcional): Nome do especialista
+        service_type (str, opcional): Tipo de serviço
     """
     try:
+        # Primeiro, busca os IDs correspondentes aos nomes
+        specialist_id = None
+        service_id = None
+        
+        if specialist_name:
+            specialist_response = requests.get(
+                f"{BASE_URL}/specialists/search",
+                params={"name": specialist_name}
+            )
+            if specialist_response.status_code == 200:
+                specialist_data = specialist_response.json()
+                if specialist_data:
+                    specialist_id = specialist_data[0]["id"]
+
+        if service_type:
+            service_response = requests.get(
+                f"{BASE_URL}/services/search",
+                params={"name": service_type}
+            )
+            if service_response.status_code == 200:
+                service_data = service_response.json()
+                if service_data:
+                    service_id = service_data[0]["id"]
+
+        # Agora busca os horários disponíveis
         params = {
             "start_date": start_date,
-            "end_date": end_date
+            "end_date": end_date,
+            "specialist_id": specialist_id,
+            "service_id": service_id
         }
-        if specialist_id:
-            params["specialist_id"] = specialist_id
-        if service_id:
-            params["service_id"] = service_id
 
         response = requests.get(
             f"{BASE_URL}/appointments/available-slots",
@@ -63,10 +86,17 @@ def get_available_slots(start_date: str, end_date: str,
 
         if response.status_code == 200:
             slots = response.json()
-            return f"Horários disponíveis encontrados:\n{slots}"
-        return f"Erro ao buscar horários: {response.text}"
+            # Formata a resposta de maneira amigável
+            formatted_slots = []
+            for slot in slots:
+                dt = datetime.fromisoformat(slot["datetime"])
+                formatted_slots.append(
+                    dt.strftime("%A, %d de %B às %H:%M")
+                )
+            return "\n".join(formatted_slots)
+        return "Não foi possível encontrar horários disponíveis para o período solicitado."
     except Exception as e:
-        return f"Erro ao buscar horários: {str(e)}"
+        return f"Ocorreu um erro ao buscar horários disponíveis: {str(e)}"
 
 
 @tool
@@ -92,3 +122,21 @@ def get_appointments_by_contact(contact: str, start_date: str, end_date: str) ->
         return f"Erro ao buscar agendamentos: {response.text}"
     except Exception as e:
         return f"Erro ao buscar agendamentos: {str(e)}"
+
+
+@tool
+def cancel_appointment(event_id: str) -> str:
+    """Útil para cancelar um agendamento existente.
+    Args:
+        event_id (str): ID do agendamento a ser cancelado
+    """
+    try:
+        response = requests.delete(
+            f"{BASE_URL}/appointments/{event_id}"
+        )
+
+        if response.status_code == 200:
+            return "Agendamento cancelado com sucesso!"
+        return f"Erro ao cancelar agendamento: {response.text}"
+    except Exception as e:
+        return f"Erro ao cancelar agendamento: {str(e)}"

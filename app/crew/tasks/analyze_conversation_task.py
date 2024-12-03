@@ -4,7 +4,6 @@ from typing import List, Dict
 
 
 def analyze_conversation_task(agent, messages: List[Dict], customer_status: str) -> Task:
-    # Formata as mensagens para análise
     conversation = "\n".join([
         f"[{msg.get('created_at', '')}]: {msg.get('content', '')}"
         for msg in messages
@@ -12,35 +11,30 @@ def analyze_conversation_task(agent, messages: List[Dict], customer_status: str)
 
     return Task(
         description=dedent(f"""
-            Analise a seguinte conversa e crie um resumo estruturado:
+            Analise a seguinte conversa e identifique APENAS a intenção principal do cliente, 
+            respondendo com UMA ÚNICA PALAVRA conforme as regras abaixo:
 
+            CONVERSA:
             {conversation}
 
-            Seu resumo deve conter:
+            REGRAS DE CLASSIFICAÇÃO:
+            - "recepcao": quando o cliente está apenas sendo cordial (bom dia, boa tarde, boa noite, olá)
+            - "especialista": quando busca informações sobre especialistas
+            - "servico": quando busca informações sobre serviços oferecidos
+            - "agendamento": quando quer marcar, remarcar ou cancelar horários
 
-            - Qual a principal solicitação/necessidade do cliente
-            - Serviço(s) mencionado(s) (se mencionado)
-            - Preferência de horário (se mencionada)
-            - Preferência de especialista (se mencionada)
-
-            Mantenha o resumo conciso e focado nas informações relevantes para o agendamento.
-            
             IMPORTANTE:
-            - Mantenha o foco nas mensagens mais recentes
-            - Ignore informações antigas ou fora de contexto
-            - Seja direto e objetivo
-            - Priorize informações úteis
-            - SEMPRE responda em português brasileiro
-            - Não responda em markdown
-            - Saiba diferenciar um cliente novo de um cliente cadastrado (o cliente é {customer_status})
+            - Responda APENAS com uma das palavras acima
+            - Não adicione pontuação ou explicações
+            - Priorize as mensagens mais recentes
+            - Em caso de dúvida entre categorias, priorize na ordem: agendamento > servico > especialista > recepcao
             
-            Exemplo de respostas: 
-            - A principa intenção do cliente é agendar uma consulta, sem preferência de especialista e horário e nenhum serviço foi mencionado
-            - O cliente está procurando informações sobre os serviços oferecidos
-            - O cliente está procurando um especialista em cardiologia
-            - O cliente está procurando um horário para uma consulta com o especialista em cardiologia
-            - O cliente está procurando informações sobre os serviços oferecidos e gostaria de agendar uma consulta para o dia 10/02/2024
+            EXEMPLOS:
+            - "Bom dia" -> recepcao
+            - "Quais especialistas atendem?" -> especialista
+            - "Que tipos de terapia vocês fazem?" -> servico
+            - "Quero marcar um horário" -> agendamento
         """),
-        expected_output="Resumo estruturado da conversa com informações relevantes para agendamento",
-        agent=agent,
+        expected_output="Uma única palavra indicando a intenção: recepcao, especialista, servico ou agendamento",
+        agent=agent
     )

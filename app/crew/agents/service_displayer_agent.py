@@ -30,6 +30,11 @@ def get_services_display_agent(llm):
         - Explique diferenças entre serviços similares
         - Mencione disponibilidade dos especialistas
         - Use linguagem acessível e profissional
+        - NAO RESPONDA JAMAIS EM MARKDOWN
+        - NAO RESPONDA JAMAIS EM MARKDOWN
+        - NAO RESPONDA JAMAIS EM MARKDOWN
+        - NAO RESPONDA JAMAIS EM MARKDOWN
+        - NAO RESPONDA JAMAIS EM MARKDOWN
 
         REGRAS:
         - Seja preciso com valores e durações
@@ -40,7 +45,5 @@ def get_services_display_agent(llm):
         """,
         tools=[list_services],
         llm=llm,
-        allow_delegation=True,
-        max_iter=1,
         verbose=True
     )

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException
+from app.models.specialist import Specialist
 from app.services.specialist_service import (
     get_all_specialists,
     get_specialist_by_id,
     create_specialist,
     update_specialist,
     delete_specialist,
+    get_specialist_by_name,
+    search_specialists_by_name,
 )
 from pydantic import BaseModel
 from typing import List
@@ -56,3 +59,27 @@ async def remove_specialist(specialist_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Specialist not found")
     return {"detail": "Specialist deleted successfully"}
+
+
+@router.get("/by-name/{name}", response_model=SpecialistOut)
+async def get_specialist_by_name(name: str):
+    """Busca um especialista específico pelo nome"""
+    specialist = await get_specialist_by_name(name)
+    if not specialist:
+        raise HTTPException(
+            status_code=404,
+            detail="Especialista não encontrado"
+        )
+    return specialist
+
+
+@router.get("/search/{name}", response_model=List[SpecialistOut])
+async def search_specialists_by_name(name: str):
+    """Busca especialistas pelo nome"""
+    specialists = await search_specialists_by_name(name)
+    if not specialists:
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhum especialista encontrado com este nome"
+        )
+    return specialists

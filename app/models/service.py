@@ -1,4 +1,5 @@
 from tortoise import Model, fields
+from tortoise.expressions import Q
 
 
 class Service(Model):
@@ -21,3 +22,33 @@ class Service(Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    async def get_by_name(cls, name: str):
+        """
+        Busca um serviço pelo nome, usando correspondência parcial case-insensitive.
+        
+        Args:
+            name (str): Nome ou parte do nome do serviço
+            
+        Returns:
+            Service: Primeiro serviço encontrado que corresponda ao nome
+        """
+        return await cls.filter(
+            Q(name__icontains=name)
+        ).first()
+
+    @classmethod
+    async def search_by_name(cls, name: str):
+        """
+        Busca todos os serviços que correspondam ao nome.
+        
+        Args:
+            name (str): Nome ou parte do nome do serviço
+            
+        Returns:
+            List[Service]: Lista de serviços que correspondam ao nome
+        """
+        return await cls.filter(
+            Q(name__icontains=name)
+        ).all()

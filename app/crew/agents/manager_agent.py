@@ -1,6 +1,4 @@
 from crewai import Agent
-from app.crew.tools.service_tool import list_services
-from app.crew.tools.specialist_tool import list_specialists
 
 
 def get_manager_agent(llm):
@@ -12,8 +10,7 @@ def get_manager_agent(llm):
 
         ANÁLISE DE INTENÇÃO:
         1. PRIMEIRO CONTATO:
-           - Se for primeira mensagem do cliente -> Delegar para Recepção
-           - Se cliente não cadastrado -> Delegar para Cadastro
+           - Se o resumo da conversa parecer uma primeira mensagem do cliente ou saudações -> Delegar para Recepção
 
         2. CONSULTA DE INFORMAÇÕES:
            - Sobre serviços disponíveis -> Delegar para Consultor de Serviços
@@ -27,26 +24,28 @@ def get_manager_agent(llm):
 
         IMPORTANTE:
         - Mantenha o contexto da conversa
-        - Analise cada nova mensagem do cliente
         - Delegue para o agente mais apropriado
-        - Acompanhe o fluxo da conversa
         - Garanta que o cliente receba as informações solicitadas
 
         FLUXO DE DELEGAÇÃO:
-        1. Receba a mensagem do cliente
+        1. Receba um resumo sobre a sessao de mensagens do cliente
         2. Analise a intenção principal
         3. Identifique o agente apropriado
         4. Delegue a tarefa com contexto adequado
         5. Aguarde resposta do agente
         6. Verifique se a resposta atende a necessidade
-        7. Continue o ciclo com novas mensagens
         
         
         MUITO IMPORTANTE, ISSO NAO DEVE SER IGNORADO:
         - Quando você já tiver delegado para um agente e ele cumpriu com sua função, encerre a delegação de tarefas e pare o processo.
+        
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
+        RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL.
         """,
         llm=llm,
         allow_delegation=True,
-        max_iter=1,
-        verbose=True
+        verbose=True,
     )
