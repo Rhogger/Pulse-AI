@@ -5,7 +5,7 @@ from typing import Optional, List
 import re
 from zoneinfo import ZoneInfo
 
-from app.services.chat_service import process_new_message, get_session_analysis
+from app.services.chat_service import process_new_message, get_session_analysis, get_crew_response
 
 router = APIRouter()
 
@@ -21,6 +21,10 @@ class ChatResponse(BaseModel):
     success: bool
     message: str
     data: Optional[List[str]] = None
+
+
+class CrewResponse(BaseModel):
+    contact_number: str
 
 
 @router.post("/webhook")
@@ -87,4 +91,22 @@ async def get_analysis(session_id: str):
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao buscar análise: {str(e)}"
+        )
+
+
+@router.post("/crew-response")
+async def get_contact_crew_response(data: CrewResponse):
+    """Endpoint para recuperar a resposta da crew para um contato específico."""
+    try:
+        response = await get_crew_response(data.contact_number)
+        if not response:
+            raise HTTPException(
+                status_code=404,
+                detail="Resposta não encontrada para este contato"
+            )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao buscar resposta da crew: {str(e)}"
         )

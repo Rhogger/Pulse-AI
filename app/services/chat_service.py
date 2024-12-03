@@ -8,6 +8,7 @@ from app.enum.session_status import SessionStatus
 from app.crew.crews.hierarquical_crew import run_crew
 from app.services.crews_service import execute_analyze_conversation_crew
 from app.utils.date_utils import normalize_datetime, get_current_datetime, TIMEZONE_BR
+import httpx
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -26,6 +27,10 @@ class RedisKeys:
     @staticmethod
     def messages_key(session_id: str) -> str:
         return f"chat:messages:{session_id}"
+
+    @staticmethod
+    def crew_response_key(contact: str) -> str:
+        return f"chat:crew_response:{contact}"
 
 
 async def get_or_create_session(contact_number: str, name: str) -> Dict:
@@ -51,7 +56,6 @@ async def get_or_create_session(contact_number: str, name: str) -> Dict:
             except (json.JSONDecodeError, KeyError) as e:
                 print(f"Erro ao decodificar sessão existente: {str(e)}")
 
-        # Ao criar nova sessão, usa o número do contato como parte do ID
         session_counter = await redis.incr('chat:session:counter')
         session_id = f"{contact_number}_{session_counter}"
 
@@ -59,12 +63,12 @@ async def get_or_create_session(contact_number: str, name: str) -> Dict:
         session = {
             'id': session_id,
             'contact_number': contact_number,
+            'name': name,
             'status': SessionStatus.IDLE.value,
             'last_interaction': current_time.isoformat(),
             'created_at': current_time.isoformat()
         }
 
-        # Salva no Redis
         await redis.set(
             session_key,
             json.dumps(session),
@@ -283,6 +287,12 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
             initial_message=analysis
         )
 
+        # Salva a resposta da crew
+        await save_crew_response(session['contact_number'], crew_result)
+
+        # Envia a resposta da crew
+        await send_crew_response(session['contact_number'], crew_result['text'])
+
         # Após resposta da crew, limpa a sessão atual
         await redis.delete(RedisKeys.session_key(session['contact_number']))
         await redis.delete(RedisKeys.messages_key(session_id))
@@ -314,3 +324,49 @@ async def get_session_analysis(session_id: str) -> Optional[Dict]:
     analysis_key = f"chat:analysis:{session_id}"
     analysis_data = await redis.get(analysis_key)
     return json.loads(analysis_data) if analysis_data else None
+
+
+async def save_crew_response(contact_number: str, response: Dict) -> None:
+    """Salva a resposta da crew no Redis."""
+    try:
+        response_key = RedisKeys.crew_response_key(contact_number)
+        await redis.set(
+            response_key,
+            json.dumps(response),
+            ex=SESSION_TTL  # Usa o mesmo TTL das sessões
+        )
+    except Exception as e:
+        print(f"Erro ao salvar resposta da crew: {str(e)}")
+        raise
+
+
+async def get_crew_response(contact_number: str) -> Optional[Dict]:
+    """Recupera a resposta da crew do Redis."""
+    try:
+        response_key = RedisKeys.crew_response_key(contact_number)
+        response_data = await redis.get(response_key)
+        if response_data:
+            return json.loads(response_data)
+        return None
+    except Exception as e:
+        print(f"Erro ao recuperar resposta da crew: {str(e)}")
+        return None
+
+
+async def send_crew_response(contact_number: str, text: str) -> None:
+    """Envia a resposta da crew para o endpoint externo."""
+    url = "https://evo-pulse.duckdns.org/message/sendText/Pulse-AI"
+    payload = {
+        "number": contact_number,
+        "text": text
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()  # Levanta uma exceção para códigos de status de erro
+        print(f"Resposta enviada com sucesso para {contact_number}")
+    except httpx.HTTPStatusError as e:
+        print(
+            f"Erro ao enviar resposta: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        print(f"Erro ao enviar resposta: {str(e)}")
