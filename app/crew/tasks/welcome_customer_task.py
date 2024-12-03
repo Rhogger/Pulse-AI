@@ -1,13 +1,11 @@
 from crewai import Task
 
 
-def welcome_customer_task(agent, initial_message: str, customer_name: str | None):
+def welcome_customer_task(agent, initial_message: str, customer_name: str):
     return Task(
         description=f"""
-        Caso o nome nao seja "None", use as informações do cliente: {customer_name}
-        
         O cliente está solicitando: "{initial_message}"
-        Informações do cliente: {customer_name}
+        Nome do cliente: {customer_name}
         
         Sua missão é:
          1. Analise as informações do cliente recebidas
