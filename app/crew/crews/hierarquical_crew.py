@@ -13,7 +13,7 @@ from app.crew.tasks.create_customer_task import create_customer_task
 from app.services.customer_service import get_all_customers
 
 
-def run_crew(customer_name: str, contact_number: str, initial_message: str) -> str:
+def run_crew(customer_name: str, contact_number: str, initial_message: str) -> dict:
     load_dotenv()
 
     llm = get_gemini_llm()
@@ -53,4 +53,10 @@ def run_crew(customer_name: str, contact_number: str, initial_message: str) -> s
     )
 
     results = crew.kickoff()
-    return str(results)
+
+    # Retorna um dicionário com a resposta
+    return {
+        "text": str(results),
+        "type": "text",
+        "contact_number": contact_number
+    }
