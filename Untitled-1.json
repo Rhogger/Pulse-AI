@@ -1,0 +1,30 @@
+{
+  "local": "p.sendData-Webhook",
+  "url": "https://evo-pulse.duckdns.org/api/chat/webhook",
+  "event": "messages.upsert",
+  "instance": "Pulse-AI",
+  "data": {
+    "key": {
+      "remoteJid": "556499691436@s.whatsapp.net",
+      "fromMe": false,
+      "id": "3A7D888F2DF2C33D3FDB",
+      "participant": null
+    },
+    "pushName": "Leonardo",
+    "status": null,
+    "message": {
+      "conversation": "Não sei o nome da música",
+      "messageContextInfo": "[MessageContextInfo]"
+    },
+    "contextInfo": null,
+    "messageType": "conversation",
+    "messageTimestamp": 1733241104,
+    "instanceId": "17fb8d29-b952-490f-8b7a-4c1457a76f9b",
+    "source": "ios"
+  },
+  "destination": "https://evo-pulse.duckdns.org/api/chat/webhook",
+  "date_time": "2024-12-03T12:51:45.104Z",
+  "sender": "556499840431@s.whatsapp.net",
+  "server_url": "http://localhost:8080",
+  "apikey": "9770A636AB32-4095-B6FF-33133857DD73"
+}

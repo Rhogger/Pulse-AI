@@ -27,6 +27,7 @@ def welcome_customer_task(agent, initial_message: str, customer_name: str):
         - Mantenha a resposta curta e objetiva
         - A resposta deve ser sem formatação Markdown
         - A resposta deve ser como se você estivesse respondendo diretamente ao cliente
+        - Não citar nenhum agente ou sistema
         """,
         expected_output="Resposta personalizada baseada no status do cliente (novo ou recorrente)",
         agent=agent

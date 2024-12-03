@@ -30,20 +30,22 @@ class CrewResponse(BaseModel):
 @router.post("/webhook")
 async def handle_webhook(data: dict):
     try:
-        # Extrai o número do contato (remove @s.whatsapp.net)
-        contact_number = data.get("sender", "").split(
-            "@")[0] if data.get("sender") else None
+        print("\n=== INICIANDO PROCESSAMENTO DO WEBHOOK ===")
+        print(f"Dados recebidos: {data}")
 
-        # Extrai o timestamp e converte para datetime com fuso de Brasília
-        timestamp = data.get("data", {}).get("message", {}).get(
-            "messageContextInfo", {}).get("deviceListMetadata", {}).get("senderTimestamp")
+        # Extrai o número do contato do remoteJid (remove @s.whatsapp.net)
+        contact_number = data.get("data", {}).get("key", {}).get("remoteJid", "").split(
+            "@")[0] if data.get("data", {}).get("key", {}).get("remoteJid") else None
+        print(f"Número do contato extraído: {contact_number}")
+
+        # Usa o messageTimestamp diretamente do data
+        timestamp = data.get("data", {}).get("messageTimestamp")
         if timestamp:
-            # Converte para inteiro e depois para datetime
-            timestamp_int = int(timestamp)
             sent_at = datetime.fromtimestamp(
-                timestamp_int, tz=ZoneInfo("America/Sao_Paulo"))
+                timestamp, tz=ZoneInfo("America/Sao_Paulo"))
         else:
             sent_at = datetime.now(tz=ZoneInfo("America/Sao_Paulo"))
+        print(f"Timestamp da mensagem: {sent_at}")
 
         message = WhatsAppMessage(
             name=data.get("data", {}).get("pushName", ""),
@@ -52,6 +54,7 @@ async def handle_webhook(data: dict):
                 "message", {}).get("conversation", ""),
             sent_at=sent_at
         )
+        print(f"Mensagem criada: {message}")
 
         if not all([message.contact_number, message.message_content]):
             raise HTTPException(
@@ -66,10 +69,18 @@ async def handle_webhook(data: dict):
             sent_at=message.sent_at,
             name=message.name
         )
+        print(f"Resultado do processamento: {result}")
 
         return result
 
+    except HTTPException as e:
+        print(f"\nHTTPException: {e.detail}")
+        raise
     except Exception as e:
+        print(f"\nERRO GERAL ao processar webhook:")
+        print(f"Tipo do erro: {type(e)}")
+        print(f"Mensagem de erro: {str(e)}")
+        print(f"Traceback: {e.__traceback__}")
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao processar webhook: {str(e)}"

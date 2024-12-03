@@ -10,6 +10,7 @@ from app.services.crews_service import execute_analyze_conversation_crew
 from app.utils.date_utils import normalize_datetime, get_current_datetime, TIMEZONE_BR
 import httpx
 from app.crew.tools.customer_tool import get_customer_by_contact
+from app.services.customer_service import create_customer, get_all_customers
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -232,21 +233,28 @@ async def process_new_message(
         raise
 
 
-async def check_customer_status(contact_number: str) -> str:
-    """Verifica se o cliente está cadastrado."""
+async def check_customer_status(contact_number: str, name: str) -> str:
+    """Verifica se o cliente está cadastrado e cria um novo se necessário."""
     try:
-        result = get_customer_by_contact(contact_number)
+        # Busca clientes pelo número de contato
+        customers = await get_all_customers(contact_number=contact_number)
 
         print(f"\n=== VERIFICANDO STATUS DO CLIENTE ===")
         print(f"Número: {contact_number}")
-        print(f"Resultado: {result}")
+        print(f"Clientes encontrados: {customers}")
 
-        if "Nenhum cliente encontrado" in result:
-            return "novo"
-        return "cadastrado"
+        if not customers:
+            # Cria um novo cliente
+            await create_customer({
+                "name": name,
+                "contact_number": contact_number
+            })
+            print(f"Cliente {name} criado com sucesso.")
+            return "cliente novo"
+        return "cliente cadastrado"
     except Exception as e:
-        print(f"Erro ao verificar status do cliente: {str(e)}")
-        return "novo"  # Em caso de erro, assume cliente novo
+        print(f"Erro ao verificar ou criar cliente: {str(e)}")
+        return "cliente novo"  # Em caso de erro, assume cliente novo
 
 
 async def check_and_process_session(session_id: str) -> Optional[Dict]:
@@ -290,7 +298,7 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         print(f"Status da sessão {session_id} atualizado para 'processing'")
 
         # Verifica status do cliente
-        customer_status = await check_customer_status(session['contact_number'])
+        customer_status = await check_customer_status(session['contact_number'], session['name'])
         print(f"Status do cliente: {customer_status}")
 
         # Obtém e formata mensagens
