@@ -281,15 +281,22 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         # Executa a análise de forma síncrona
         analysis = execute_analyze_conversation_crew(messages)
 
-        # Executa a crew hierárquica também de forma síncrona
+        # Executa a crew hierárquica
+        print("\n=== EXECUTANDO CREW ===")
         crew_result = run_crew(
             customer_name=session['name'],
             contact_number=session['contact_number'],
             initial_message=analysis
         )
+        print(f"Resultado da crew: {crew_result}")
 
         # Salva a resposta da crew
         await save_crew_response(session['contact_number'], crew_result)
+        print("\nResposta da crew salva no Redis")
+
+        # Envia a resposta da crew
+        print("\nTentando enviar resposta para o WhatsApp...")
+        await send_crew_response(session['contact_number'], crew_result['text'])
 
         # Após resposta da crew, limpa a sessão atual
         await redis.delete(RedisKeys.session_key(session['contact_number']))
@@ -305,15 +312,9 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         }
 
     except Exception as e:
-        print(f"Erro ao processar sessão: {str(e)}")
-        # Em caso de erro, marca a sessão como idle novamente
-        if session:
-            session['status'] = SessionStatus.IDLE.value
-            await redis.set(
-                RedisKeys.session_key(session['contact_number']),
-                json.dumps(session),
-                ex=SESSION_TTL
-            )
+        print(f"\nERRO ao processar sessão:")
+        print(f"Tipo do erro: {type(e)}")
+        print(f"Mensagem de erro: {str(e)}")
         raise
 
 
@@ -354,28 +355,44 @@ async def get_crew_response(contact_number: str) -> Optional[Dict]:
 async def send_crew_response(contact_number: str, text: str) -> None:
     """Envia a resposta da crew para o endpoint externo."""
     url = "https://evo-pulse.duckdns.org/message/sendText/Pulse-AI"
-
+    
     # Adiciona o header com a API key
     headers = {
         "apikey": WHATSAPP_API_KEY
     }
-
+    
     payload = {
         "number": contact_number,
         "text": text
     }
-
+    
+    print("\n=== INICIANDO ENVIO DE RESPOSTA DA CREW ===")
+    print(f"URL: {url}")
+    print(f"Headers: {headers}")
+    print(f"Payload: {payload}")
+    
     try:
         async with httpx.AsyncClient() as client:
+            print("\nEnviando requisição...")
             response = await client.post(
-                url,
-                json=payload,
+                url, 
+                json=payload, 
                 headers=headers
             )
+            print(f"\nResposta recebida - Status: {response.status_code}")
+            print(f"Resposta completa: {response.text}")
+            
             response.raise_for_status()
-        print(f"Resposta enviada com sucesso para {contact_number}")
+            print(f"\nResposta enviada com sucesso para {contact_number}")
+            
     except httpx.HTTPStatusError as e:
-        print(
-            f"Erro ao enviar resposta: {e.response.status_code} - {e.response.text}")
+        print(f"\nERRO HTTP ao enviar resposta:")
+        print(f"Status Code: {e.response.status_code}")
+        print(f"Response Headers: {e.response.headers}")
+        print(f"Response Body: {e.response.text}")
     except Exception as e:
-        print(f"Erro ao enviar resposta: {str(e)}")
+        print(f"\nERRO GERAL ao enviar resposta:")
+        print(f"Tipo do erro: {type(e)}")
+        print(f"Mensagem de erro: {str(e)}")
+    finally:
+        print("\n=== FIM DO ENVIO DE RESPOSTA DA CREW ===\n")
