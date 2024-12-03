@@ -14,6 +14,7 @@ import httpx
 load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
 SESSION_TTL = int(os.getenv("SESSION_TTL", 14400))  # 4 horas em segundos
+WHATSAPP_API_KEY = os.getenv("WHATSAPP_API_KEY")
 
 # Inicializa Redis
 redis = aioredis.from_url(REDIS_URL, decode_responses=True)
@@ -290,9 +291,6 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         # Salva a resposta da crew
         await save_crew_response(session['contact_number'], crew_result)
 
-        # Envia a resposta da crew
-        await send_crew_response(session['contact_number'], crew_result['text'])
-
         # Após resposta da crew, limpa a sessão atual
         await redis.delete(RedisKeys.session_key(session['contact_number']))
         await redis.delete(RedisKeys.messages_key(session_id))
@@ -356,14 +354,25 @@ async def get_crew_response(contact_number: str) -> Optional[Dict]:
 async def send_crew_response(contact_number: str, text: str) -> None:
     """Envia a resposta da crew para o endpoint externo."""
     url = "https://evo-pulse.duckdns.org/message/sendText/Pulse-AI"
+
+    # Adiciona o header com a API key
+    headers = {
+        "apikey": WHATSAPP_API_KEY
+    }
+
     payload = {
         "number": contact_number,
         "text": text
     }
+
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()  # Levanta uma exceção para códigos de status de erro
+            response = await client.post(
+                url,
+                json=payload,
+                headers=headers
+            )
+            response.raise_for_status()
         print(f"Resposta enviada com sucesso para {contact_number}")
     except httpx.HTTPStatusError as e:
         print(
