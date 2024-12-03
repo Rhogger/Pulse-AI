@@ -1,7 +1,6 @@
 import os
 from crewai.tools import tool
 import requests
-from typing import List
 
 BASE_URL = os.getenv("BASE_URL")
 
@@ -27,6 +26,7 @@ def list_services() -> str:
                 f"ID: {s['id']}, Nome: {s['name']}, "
                 f"Especialistas: [{specialists_str}], "
                 f"Duração: {s['duration_minutes']} minutos ({s['time_slots']} slots)"
+                f"Preço: R$ {s['price']}"
             )
         return "\n".join(result)
     except Exception as e:

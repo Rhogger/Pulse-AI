@@ -32,12 +32,12 @@ def list_services_task(agent):
     )
 
 
-def list_services_by_specialist_task(agent, specialist_name: str):
+def list_services_by_specialist_task(agent):
     return Task(
         description=f"""
         EXECUTE AGORA:
         1. Use a tool 'list_services' para obter todos os serviços disponíveis
-        2. Organize e apresente os serviços do especialista "{specialist_name}":
+        2. Organize e apresente os serviços do especialista:
            
            SERVIÇOS REALIZADOS PELO ESPECIALISTA:
            - Nome de cada serviço que realiza
@@ -45,7 +45,7 @@ def list_services_by_specialist_task(agent, specialist_name: str):
            - Outros especialistas que também realizam o mesmo serviço
            
            CASOS ESPECIAIS:
-           - Se houver especialistas com nomes similares a "{specialist_name}",
+           - Se houver especialistas com nomes similares",
              pergunte ao cliente para confirmar qual profissional está buscando
            - Se o especialista realizar versões especiais de serviços,
              destaque essas especializações
@@ -58,6 +58,6 @@ def list_services_by_specialist_task(agent, specialist_name: str):
         
         NÃO EXPLIQUE O PROCESSO, APENAS APRESENTE OS RESULTADOS ORGANIZADOS.
         """,
-        expected_output=f"Lista organizada de serviços realizados por {specialist_name}",
+        expected_output=f"Lista organizada de serviços realizados pelo especialista mencionado",
         agent=agent
     )

@@ -1,9 +1,10 @@
 from crewai import Agent
 from app.crew.tools.calendar_tool import (
-    create_appointment, 
+    create_appointment,
     get_available_slots,
     get_appointments_by_contact
 )
+
 
 def get_calendar_agent(llm):
     return Agent(
@@ -25,8 +26,10 @@ def get_calendar_agent(llm):
         
         Seja sempre cordial e profissional ao interagir sobre os agendamentos.
         """,
-        tools=[create_appointment, get_available_slots, get_appointments_by_contact],
+        tools=[create_appointment, get_available_slots,
+               get_appointments_by_contact],
         llm=llm,
-        allow_delegation=False,
+        allow_delegation=True,
+        max_iter=1,
         verbose=True
-    ) 
+    )

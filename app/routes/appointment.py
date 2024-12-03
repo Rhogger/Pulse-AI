@@ -211,3 +211,31 @@ async def get_appointments_by_contact(
             status_code=500,
             detail=f"Erro ao buscar agendamentos: {str(e)}"
         )
+
+
+@router.delete("/{event_id}")
+async def delete_appointment(event_id: str):
+    """
+    Deleta um agendamento existente.
+
+    Args:
+        event_id (str): ID do evento no Google Calendar
+
+    Returns:
+        dict: Mensagem de sucesso
+
+    Raises:
+        HTTPException: Se houver erro ao deletar o agendamento
+    """
+    try:
+        calendar_service = GoogleCalendarService()
+        await calendar_service.delete_appointment(event_id)
+        return {"detail": "Agendamento cancelado com sucesso"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao cancelar agendamento: {str(e)}"
+        )

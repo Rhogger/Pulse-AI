@@ -19,7 +19,7 @@ def get_specialists_display_agent(llm):
         """,
         tools=[list_specialists],
         llm=llm,
-        allow_delegation=False,
+        allow_delegation=True,
         max_iter=1,
         verbose=True
     )

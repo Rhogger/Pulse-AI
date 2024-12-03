@@ -40,9 +40,13 @@ def get_manager_agent(llm):
         5. Aguarde resposta do agente
         6. Verifique se a resposta atende a necessidade
         7. Continue o ciclo com novas mensagens
+        
+        
+        MUITO IMPORTANTE, ISSO NAO DEVE SER IGNORADO:
+        - Quando você já tiver delegado para um agente e ele cumpriu com sua função, encerre a delegação de tarefas e pare o processo.
         """,
-        tools=[list_services, list_specialists],
         llm=llm,
         allow_delegation=True,
+        max_iter=1,
         verbose=True
     )

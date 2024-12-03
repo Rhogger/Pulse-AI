@@ -22,6 +22,8 @@ DATABASE_CONFIG = {
                 "app.models.specialist",
                 "app.models.service",
                 "app.models.customer",
+                "app.models.chat_session",
+                "app.models.chat_message",
                 "aerich.models"],
             "default_connection": "default",
         },

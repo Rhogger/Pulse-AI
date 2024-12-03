@@ -1,8 +1,9 @@
+from typing import Any
 from crewai import Agent
 from app.crew.tools.customer_tool import create_new_customer
 
 
-def get_register_agent(llm, customer_info: str):
+def get_register_agent(llm, customer_name: str, customer_contact: str):
     return Agent(
         role='Cadastrador de Clientes',
         goal='Executar o cadastro de clientes e retornar o JSON completo',
@@ -28,10 +29,8 @@ def get_register_agent(llm, customer_info: str):
         
         4. Retornar EXATAMENTE o JSON que a tool retornou, sem modificações
         """,
+        input=[customer_name, customer_contact],
         tools=[create_new_customer],
         llm=llm,
-        input=[customer_info],
-        allow_delegation=False,
-        max_iter=1,
         verbose=True
     )

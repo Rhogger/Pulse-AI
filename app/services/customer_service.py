@@ -2,11 +2,11 @@ from app.models.customer import Customer
 from tortoise.exceptions import DoesNotExist
 
 
-async def get_all_customers(contact_number: str | None = None):
+def get_all_customers(contact_number: str | None = None):
     """Retorna todos os clientes, opcionalmente filtrados por número de contato."""
     if contact_number:
-        return await Customer.filter(contact_number=contact_number)
-    return await Customer.all()
+        return Customer.filter(contact_number=contact_number)
+    return Customer.all()
 
 
 async def get_customer_by_id(customer_id: int):

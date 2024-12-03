@@ -1,5 +1,5 @@
+from decimal import Decimal
 from fastapi import APIRouter, HTTPException
-from app.routes.specialist import SpecialistOut
 from app.services.service_service import (
     get_all_services,
     get_service_by_id,
@@ -8,27 +8,41 @@ from app.services.service_service import (
     update_service,
     delete_service,
 )
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
 
 router = APIRouter()
 
 
+class SpecialistOut(BaseModel):
+    id: int
+    name: str
+
+
 class ServiceIn(BaseModel):
     name: str
+    description: str
+    duration: int
+    price: Decimal = Field(decimal_places=2, max_digits=10)
     specialist_ids: List[int]
-    time_slots: int
+
+
+class ServiceUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    duration: Optional[int] = None
+    price: Optional[Decimal] = Field(None, decimal_places=2, max_digits=10)
+    specialist_ids: Optional[List[int]] = None
 
 
 class ServiceOut(BaseModel):
     id: int
     name: str
+    description: str
+    duration: int
+    price: Decimal
     specialists: List[SpecialistOut]
-    time_slots: int
-    duration_minutes: int
-
-    class Config:
-        orm_mode = True
 
 
 @router.get("/", response_model=List[ServiceOut])
@@ -59,15 +73,13 @@ async def list_services_by_specialist(specialist_id: int):
 @router.post("/", response_model=ServiceOut)
 async def add_service(service: ServiceIn):
     service_data = service.dict()
-    specialist_ids = service_data.pop('specialist_ids')
-    return await create_service(service_data, specialist_ids)
+    return await create_service(service_data)
 
 
 @router.put("/{service_id}", response_model=ServiceOut)
-async def modify_service(service_id: int, service: ServiceIn):
-    service_data = service.dict()
-    specialist_ids = service_data.pop('specialist_ids')
-    updated_service = await update_service(service_id, service_data, specialist_ids)
+async def modify_service(service_id: int, service: ServiceUpdate):
+    service_data = service.dict(exclude_unset=True)
+    updated_service = await update_service(service_id, service_data)
     if not updated_service:
         raise HTTPException(status_code=404, detail="Serviço não encontrado")
     return updated_service

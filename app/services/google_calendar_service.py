@@ -454,3 +454,39 @@ class GoogleCalendarService:
                 status_code=500,
                 detail=f"Erro ao buscar agendamentos: {str(e)}"
             )
+
+    async def delete_appointment(self, event_id: str):
+        """
+        Deleta um evento do Google Calendar.
+
+        Args:
+            event_id (str): ID do evento no Google Calendar
+
+        Returns:
+            bool: True se o evento foi deletado com sucesso
+
+        Raises:
+            HTTPException: Se houver erro ao deletar o evento
+        """
+        try:
+            self.service.events().delete(
+                calendarId=self.calendar_id,
+                eventId=event_id
+            ).execute()
+            return True
+
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Agendamento não encontrado"
+                )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro na API do Google Calendar: {str(e)}"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao deletar agendamento: {str(e)}"
+            )

@@ -1,10 +1,12 @@
 from crewai import Task
 
 
-def welcome_customer_task(agent, initial_message: str, customer_name: str):
+def welcome_customer_task(agent, initial_message: str, customer_name: str | None):
     return Task(
         description=f"""
-        O cliente enviou a seguinte mensagem: "{initial_message}"
+        Caso o nome nao seja "None", use as informações do cliente: {customer_name}
+        
+        O cliente está solicitando: "{initial_message}"
         Informações do cliente: {customer_name}
         
         Sua missão é:
@@ -25,6 +27,8 @@ def welcome_customer_task(agent, initial_message: str, customer_name: str):
         - Indague o usuário sobre o que ele está procurando
         - Responda em português brasileiro
         - Mantenha a resposta curta e objetiva
+        - A resposta deve ser sem formatação Markdown
+        - A resposta deve ser como se você estivesse respondendo diretamente ao cliente
         """,
         expected_output="Resposta personalizada baseada no status do cliente (novo ou recorrente)",
         agent=agent

@@ -30,7 +30,5 @@ def get_reception_agent(llm, customer_name, customer_contact):
         """,
         input=[customer_name, customer_contact],
         llm=llm,
-        allow_delegation=True,
-        max_iter=1,
         verbose=True,
     )
