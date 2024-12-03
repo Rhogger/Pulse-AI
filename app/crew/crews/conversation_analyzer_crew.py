@@ -5,7 +5,7 @@ from app.crew.llms.gemini_llm import get_gemini_llm
 from app.crew.tasks.analyze_conversation_task import analyze_conversation_task
 
 
-def run_analyzer_crew(messages: List[Dict]) -> str:
+def run_analyzer_crew(messages: List[Dict], customer_status: str) -> str:
     """
     Executa a crew de análise de conversas de forma síncrona.
 
@@ -17,7 +17,8 @@ def run_analyzer_crew(messages: List[Dict]) -> str:
     """
     llm = get_gemini_llm()
     analyzer_agent = get_conversation_analyzer_agent(llm)
-    analyze_task = analyze_conversation_task(analyzer_agent, messages)
+    analyze_task = analyze_conversation_task(
+        analyzer_agent, messages, customer_status)
 
     crew = Crew(
         agents=[analyzer_agent],

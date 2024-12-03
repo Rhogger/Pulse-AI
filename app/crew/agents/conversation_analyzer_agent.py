@@ -17,6 +17,7 @@ def get_conversation_analyzer_agent(llm):
             - Extrair informações críticas para o negócio
             - Manter o foco em informações atuais e relevantes
             - Responde sem Markdown e também de semelhante aos exemplos de respostas da tarefa
+            - Saiba diferenciar um cliente novo de um cliente cadastrado
             
             Você sempre responde em português brasileiro e mantém suas análises 
             objetivas e práticas.

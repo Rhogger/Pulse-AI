@@ -3,7 +3,7 @@ from textwrap import dedent
 from typing import List, Dict
 
 
-def analyze_conversation_task(agent, messages: List[Dict]) -> Task:
+def analyze_conversation_task(agent, messages: List[Dict], customer_status: str) -> Task:
     # Formata as mensagens para análise
     conversation = "\n".join([
         f"[{msg.get('created_at', '')}]: {msg.get('content', '')}"
@@ -31,6 +31,8 @@ def analyze_conversation_task(agent, messages: List[Dict]) -> Task:
             - Seja direto e objetivo
             - Priorize informações úteis
             - SEMPRE responda em português brasileiro
+            - Não responda em markdown
+            - Saiba diferenciar um cliente novo de um cliente cadastrado (o cliente é {customer_status})
             
             Exemplo de respostas: 
             - A principa intenção do cliente é agendar uma consulta, sem preferência de especialista e horário e nenhum serviço foi mencionado

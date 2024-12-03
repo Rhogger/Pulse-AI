@@ -12,7 +12,7 @@ def _run_crew_in_process(func, *args):
     return result
 
 
-def execute_analyze_conversation_crew(messages: List[Dict]) -> str:
+def execute_analyze_conversation_crew(messages: List[Dict], customer_status: str) -> str:
     """
     Analisa uma lista de mensagens usando a crew especializada de forma síncrona.
 
@@ -33,7 +33,7 @@ def execute_analyze_conversation_crew(messages: List[Dict]) -> str:
         ]
 
         # Executa a crew de análise em um processo separado
-        return _run_crew_in_process(run_analyzer_crew, formatted_messages)
+        return _run_crew_in_process(run_analyzer_crew, formatted_messages, customer_status)
 
     except Exception as e:
         raise Exception(f"Erro ao analisar conversa: {str(e)}")

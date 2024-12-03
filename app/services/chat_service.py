@@ -9,6 +9,7 @@ from app.crew.crews.hierarquical_crew import run_crew
 from app.services.crews_service import execute_analyze_conversation_crew
 from app.utils.date_utils import normalize_datetime, get_current_datetime, TIMEZONE_BR
 import httpx
+from app.crew.tools.customer_tool import get_customer_by_contact
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -231,6 +232,23 @@ async def process_new_message(
         raise
 
 
+async def check_customer_status(contact_number: str) -> str:
+    """Verifica se o cliente está cadastrado."""
+    try:
+        result = get_customer_by_contact(contact_number)
+
+        print(f"\n=== VERIFICANDO STATUS DO CLIENTE ===")
+        print(f"Número: {contact_number}")
+        print(f"Resultado: {result}")
+
+        if "Nenhum cliente encontrado" in result:
+            return "novo"
+        return "cadastrado"
+    except Exception as e:
+        print(f"Erro ao verificar status do cliente: {str(e)}")
+        return "novo"  # Em caso de erro, assume cliente novo
+
+
 async def check_and_process_session(session_id: str) -> Optional[Dict]:
     """Verifica e processa a sessão se necessário."""
     try:
@@ -241,7 +259,6 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         all_sessions = await redis.keys("chat:session:*")
         session = None
 
-        # Debug
         print(
             f"Buscando sessão {session_id} entre {len(all_sessions)} sessões")
 
@@ -261,16 +278,20 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
             print(f"Sessão {session_id} não encontrada")
             return None
 
-        # Debug
         print(f"Encontrou sessão: {session}")
 
-        # Atualiza status para PROCESSING
+        # Atualiza o status da sessão para "processing"
         session['status'] = SessionStatus.PROCESSING.value
         await redis.set(
             RedisKeys.session_key(session['contact_number']),
             json.dumps(session),
             ex=SESSION_TTL
         )
+        print(f"Status da sessão {session_id} atualizado para 'processing'")
+
+        # Verifica status do cliente
+        customer_status = await check_customer_status(session['contact_number'])
+        print(f"Status do cliente: {customer_status}")
 
         # Obtém e formata mensagens
         messages = await get_session_messages(session_id)
@@ -278,8 +299,9 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
             print(f"Nenhuma mensagem encontrada para sessão {session_id}")
             return None
 
-        # Executa a análise de forma síncrona
-        analysis = execute_analyze_conversation_crew(messages)
+        # Adiciona o status do cliente à análise
+        analysis = f"{customer_status}\n\n" + \
+            execute_analyze_conversation_crew(messages, customer_status)
 
         # Executa a crew hierárquica
         print("\n=== EXECUTANDO CREW ===")
@@ -355,36 +377,36 @@ async def get_crew_response(contact_number: str) -> Optional[Dict]:
 async def send_crew_response(contact_number: str, text: str) -> None:
     """Envia a resposta da crew para o endpoint externo."""
     url = "https://evo-pulse.duckdns.org/message/sendText/Pulse-AI"
-    
+
     # Adiciona o header com a API key
     headers = {
         "apikey": WHATSAPP_API_KEY
     }
-    
+
     payload = {
         "number": contact_number,
         "text": text
     }
-    
+
     print("\n=== INICIANDO ENVIO DE RESPOSTA DA CREW ===")
     print(f"URL: {url}")
     print(f"Headers: {headers}")
     print(f"Payload: {payload}")
-    
+
     try:
         async with httpx.AsyncClient() as client:
             print("\nEnviando requisição...")
             response = await client.post(
-                url, 
-                json=payload, 
+                url,
+                json=payload,
                 headers=headers
             )
             print(f"\nResposta recebida - Status: {response.status_code}")
             print(f"Resposta completa: {response.text}")
-            
+
             response.raise_for_status()
             print(f"\nResposta enviada com sucesso para {contact_number}")
-            
+
     except httpx.HTTPStatusError as e:
         print(f"\nERRO HTTP ao enviar resposta:")
         print(f"Status Code: {e.response.status_code}")
