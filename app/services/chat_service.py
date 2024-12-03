@@ -28,7 +28,7 @@ class RedisKeys:
         return f"chat:messages:{session_id}"
 
 
-async def get_or_create_session(contact_number: str) -> Dict:
+async def get_or_create_session(contact_number: str, name: str) -> Dict:
     """Busca ou cria uma sessão no Redis."""
     try:
         session_key = RedisKeys.session_key(contact_number)
@@ -37,10 +37,16 @@ async def get_or_create_session(contact_number: str) -> Dict:
         if session_data:
             try:
                 session = json.loads(session_data)
+                session['name'] = name
                 last_interaction = normalize_datetime(
                     datetime.fromisoformat(session['last_interaction'])
                 )
                 if last_interaction > get_current_datetime() - timedelta(seconds=SESSION_TTL):
+                    await redis.set(
+                        session_key,
+                        json.dumps(session),
+                        ex=SESSION_TTL
+                    )
                     return session
             except (json.JSONDecodeError, KeyError) as e:
                 print(f"Erro ao decodificar sessão existente: {str(e)}")
@@ -171,14 +177,21 @@ async def process_new_message(
     contact_number: str,
     content: str,
     sent_at: datetime,
+    name: str
 ) -> Dict:
     try:
         sent_at = normalize_datetime(sent_at)
 
-        # Busca a sessão existente (não cria nova se já existir)
         session = await get_session_by_contact(contact_number)
         if not session:
-            session = await get_or_create_session(contact_number)
+            session = await get_or_create_session(contact_number, name)
+        else:
+            session['name'] = name
+            await redis.set(
+                RedisKeys.session_key(contact_number),
+                json.dumps(session),
+                ex=SESSION_TTL
+            )
 
         # Debug
         print(
@@ -260,6 +273,7 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
 
         # Executa a crew hierárquica também de forma síncrona
         crew_result = run_crew(
+            customer_name=session['name'],
             contact_number=session['contact_number'],
             initial_message=analysis
         )
@@ -269,7 +283,7 @@ async def check_and_process_session(session_id: str) -> Optional[Dict]:
         await redis.delete(RedisKeys.messages_key(session_id))
 
         # Cria nova sessão
-        await get_or_create_session(session['contact_number'])
+        await get_or_create_session(session['contact_number'], session['name'])
 
         return {
             'previous_session_id': session_id,

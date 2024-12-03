@@ -25,7 +25,6 @@ def get_reception_agent(llm, customer_name, customer_contact):
         4. Explica os próximos passos com clareza
         5. Se coloca à disposição para ajudar
         6. Precisa entender a intenção do cliente
-        7. Realiza o cadastro do cliente (se o número não tiver na nossa base de dados) (O número de telefone é: {customer_contact}) (Você vai delegar a tarefa de cadastro para o agente cadastrador de clientes)
         8. Responde diretamente o cliente, então trate de utilizar a conjugação correta do verbo "ter"
         """,
         input=[customer_name, customer_contact],
