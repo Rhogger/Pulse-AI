@@ -180,6 +180,11 @@ async def process_new_message(
     name: str
 ) -> Dict:
     try:
+        # Verifica se é o número autorizado
+        if contact_number != "556493383309":
+            print(f"Número não autorizado: {contact_number}")
+            return None
+
         sent_at = normalize_datetime(sent_at)
 
         session = await get_session_by_contact(contact_number)
