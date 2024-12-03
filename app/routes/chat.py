@@ -38,6 +38,14 @@ async def handle_webhook(data: dict):
             "@")[0] if data.get("data", {}).get("key", {}).get("remoteJid") else None
         print(f"Número do contato extraído: {contact_number}")
 
+        # Verifica se o número é o permitido
+        if contact_number != "556493383309":
+            print(f"Número não autorizado: {contact_number}")
+            raise HTTPException(
+                status_code=403,
+                detail="Número não autorizado"
+            )
+
         # Usa o messageTimestamp diretamente do data
         timestamp = data.get("data", {}).get("messageTimestamp")
         if timestamp:
